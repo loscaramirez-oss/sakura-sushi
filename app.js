@@ -68,6 +68,14 @@ function findItem(key) {
   };
 }
 
+function pkgDescOf(key) {
+  try {
+    const info = findItem(key);
+    const it = MENU[info.cat].items[info.item];
+    return it.package && it.desc ? it.desc : "";
+  } catch { return ""; }
+}
+
 function getPrice(item, variant) {
   return variant ? variant.price : item.price;
 }
@@ -665,7 +673,12 @@ function buildMessage(name, phone, address, notes, salsas) {
   L.push("");
   L.push("*PEDIDO*");
   cart.forEach(c => {
-    L.push(c.qty + " x " + c.name + "  =  " + fmt(c.price * c.qty));
+    let line = c.qty + " x " + c.name + "  =  " + fmt(c.price * c.qty);
+    if (c.key.indexOf("pkg:") === 0) {
+      const d = pkgDescOf(c.key);
+      if (d) line += "\n    ▸ " + d;
+    }
+    L.push(line);
   });
   L.push("");
   L.push("*TOTAL: " + fmt(cartTotal()) + "*");
