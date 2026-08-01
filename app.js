@@ -18,7 +18,7 @@ function gradFor(name) {
 }
 
 let cart = JSON.parse(localStorage.getItem("sakuraCart") || "[]");
-let activeCat = "Todos";
+let activeCat = "⭐ Lo más pedido";
 let selectedVariant = null;
 let pendingProduct = null;
 let orderType = "llevar";
@@ -110,7 +110,7 @@ function iconTile(name, emoji) {
 function renderChips() {
   const nav = $("cats");
   nav.innerHTML = "";
-  const cats = ["Todos", "⭐ Lo más pedido"].concat(MENU.map(c => c.name));
+  const cats = ["⭐ Lo más pedido"].concat(MENU.map(c => c.name));
   cats.forEach(c => {
     const b = document.createElement("button");
     b.className = "chip" + (c === activeCat ? " active" : "");
@@ -193,7 +193,7 @@ function renderMenu() {
   const main = $("menu");
   main.innerHTML = "";
   main.appendChild(renderLoyalty());
-  if (activeCat === "Todos" || activeCat === "⭐ Lo más pedido") {
+  if (activeCat === "⭐ Lo más pedido") {
     const h = document.createElement("div");
     h.className = "cat-title";
     h.textContent = "⭐ Lo más pedido";
@@ -206,7 +206,7 @@ function renderMenu() {
     main.appendChild(list);
   }
   MENU.forEach((cat, ci) => {
-    if (activeCat !== "Todos" && activeCat !== cat.name) return;
+    if (activeCat !== cat.name) return;
     const h = document.createElement("div");
     h.className = "cat-title";
     h.textContent = cat.name;
@@ -356,7 +356,7 @@ function openPackageSheet(ci, ii, item) {
     label.textContent = roll;
     const leg = document.createElement("span");
     leg.className = "pkg-legend";
-    leg.textContent = n === 1 ? "$" + item.price : n + " x $" + item.price;
+    leg.textContent = "$" + item.price;
     opt.appendChild(check); opt.appendChild(label); opt.appendChild(leg);
     opt.onclick = () => {
       const count = pkgSelected.filter(r => r === roll).length;
