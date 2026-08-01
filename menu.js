@@ -55,7 +55,7 @@ const MENU = [
     name: "Especiales",
     items: [
       { name: "Rollitos Primavera (2 pzas)", desc: "", price: 45 },
-      { name: "Pasta Udon con Pollo", desc: "Con verduras, calabaza y zanahoria, pimiento, bañadas en soya y marinadas con salsa de la casa, acompañadas de pollo a la plancha.", price: 125 },
+      { name: "Pasta Udon con Pollo", desc: "Con verduras, calabaza y zanahoria, pimiento, bañadas en soya y marinadas con salsa de la casa, acompañadas de pollo a la plancha.", price: 125, available: false },
       { name: "Sakura Balls (4 pzas)", desc: "", price: 105 },
       { name: "Tiras de Pollo (8 pzas)", desc: "", price: 79 }
     ]

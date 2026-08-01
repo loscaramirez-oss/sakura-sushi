@@ -45,7 +45,8 @@ function sanitizeCart() {
       const clean = e.key.indexOf("pkg:") === 0 ? e.key.slice(4) : e.key;
       const p = clean.split(":");
       const cat = +p[0], item = +p[1];
-      return MENU[cat] && MENU[cat].items[item];
+      const m = MENU[cat] && MENU[cat].items[item];
+      return !!m && m.available !== false;
     });
   } catch {
     cart = [];
@@ -210,7 +211,7 @@ function renderMenu() {
 
 function featuredCard(ci, ii, item) {
   const div = document.createElement("div");
-  div.className = "featured";
+  div.className = "featured" + (item.available === false ? " off" : "");
   div.style.background = gradFor(item.name);
   const key = productKey(ci, ii, null);
   const qty = qtyOf(key);
@@ -244,7 +245,7 @@ function featuredCard(ci, ii, item) {
 
 function itemCard(ci, ii, item) {
   const div = document.createElement("div");
-  div.className = "item";
+  div.className = "item" + (item.available === false ? " off" : "");
   const key = productKey(ci, ii, null);
   const qty = qtyOf(key);
 
@@ -409,6 +410,13 @@ function closePkgSheet() {
 
 function renderAddButton(area, ci, ii, item, key, qty) {
   area.innerHTML = "";
+  if (item.available === false) {
+    const badge = document.createElement("span");
+    badge.className = "soldout";
+    badge.textContent = "No disponible";
+    area.appendChild(badge);
+    return;
+  }
   if (qty > 0) {
     const st = document.createElement("div");
     st.className = "stepper";
