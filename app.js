@@ -327,7 +327,8 @@ function openPackageSheet(ci, ii, item) {
   pendingPkg = { ci, ii, item };
   pkgSelected = [];
   $("pkgTitle").textContent = item.name;
-  $("pkgDesc").textContent = "Elige " + n + " rollos (puedes repetir el mismo):";
+  const repetir = n > 1 ? " Puedes repetir el mismo." : "";
+  $("pkgDesc").textContent = "Elige " + n + (n === 1 ? " rollo:" : " rollos:") + repetir;
   const box = $("pkgOptions");
   box.innerHTML = "";
   item.package.rolls.forEach(roll => {
@@ -342,14 +343,14 @@ function openPackageSheet(ci, ii, item) {
     label.textContent = roll;
     const leg = document.createElement("span");
     leg.className = "pkg-legend";
-    leg.textContent = n + " x $" + item.price;
+    leg.textContent = n === 1 ? "$" + item.price : n + " x $" + item.price;
     opt.appendChild(check); opt.appendChild(label); opt.appendChild(leg);
     opt.onclick = () => {
       const count = pkgSelected.filter(r => r === roll).length;
       if (count >= n) {
         pkgSelected.splice(pkgSelected.lastIndexOf(roll), 1);
       } else if (pkgSelected.length >= n) {
-        alert("Solo puedes elegir " + n + " rollos.");
+        alert("Solo puedes elegir " + n + (n === 1 ? " rollo." : " rollos."));
         return;
       } else {
         pkgSelected.push(roll);
