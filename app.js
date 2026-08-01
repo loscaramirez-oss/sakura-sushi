@@ -279,7 +279,10 @@ function itemCard(ci, ii, item) {
   return div;
 }
 
-/* ---------- Paquete 2 Rollos x $150 ---------- */
+/* ---------- Paquetes (elige N rollos) ---------- */
+function pkgCountOf(item) {
+  return (item && item.package && item.package.count) || 2;
+}
 function pkgEntries(ci, ii) {
   return cart.filter(e => e.key.indexOf("pkg:" + ci + ":" + ii + ":") === 0);
 }
@@ -305,7 +308,7 @@ function renderPkgButton(area, ci, ii, item) {
   } else {
     const b = document.createElement("button");
     b.className = "add-btn variant";
-    b.textContent = "Elegir 2";
+    b.textContent = "Elegir " + pkgCountOf(item);
     b.onclick = () => openPackageSheet(ci, ii, item);
     area.appendChild(b);
   }
@@ -320,10 +323,11 @@ function removeOnePkg(ci, ii) {
   refreshAll();
 }
 function openPackageSheet(ci, ii, item) {
+  const n = pkgCountOf(item);
   pendingPkg = { ci, ii, item };
   pkgSelected = [];
   $("pkgTitle").textContent = item.name;
-  $("pkgDesc").textContent = "Elige 2 rollos (puedes repetir el mismo):";
+  $("pkgDesc").textContent = "Elige " + n + " rollos (puedes repetir el mismo):";
   const box = $("pkgOptions");
   box.innerHTML = "";
   item.package.rolls.forEach(roll => {
@@ -338,14 +342,14 @@ function openPackageSheet(ci, ii, item) {
     label.textContent = roll;
     const leg = document.createElement("span");
     leg.className = "pkg-legend";
-    leg.textContent = "2 x $150";
+    leg.textContent = n + " x $" + item.price;
     opt.appendChild(check); opt.appendChild(label); opt.appendChild(leg);
     opt.onclick = () => {
       const count = pkgSelected.filter(r => r === roll).length;
-      if (count >= 2) {
+      if (count >= n) {
         pkgSelected.splice(pkgSelected.lastIndexOf(roll), 1);
-      } else if (pkgSelected.length >= 2) {
-        alert("Solo puedes elegir 2 rollos.");
+      } else if (pkgSelected.length >= n) {
+        alert("Solo puedes elegir " + n + " rollos.");
         return;
       } else {
         pkgSelected.push(roll);
@@ -360,22 +364,24 @@ function openPackageSheet(ci, ii, item) {
   requestAnimationFrame(() => sheet.classList.add("show"));
 }
 function updatePkgUI() {
+  const n = pkgCountOf(pendingPkg ? pendingPkg.item : null);
   document.querySelectorAll("#pkgOptions .pkg-opt").forEach(opt => {
     const roll = opt.dataset.roll;
     const count = pkgSelected.filter(r => r === roll).length;
     const check = opt.querySelector(".pkg-check");
     check.textContent = count > 0 ? "●" : "○";
-  const lbl = opt.querySelector(".pkg-label");
-  lbl.textContent = count > 1 ? roll + " ×2" : roll;
-  opt.classList.toggle("active", count > 0);
-});
+    const lbl = opt.querySelector(".pkg-label");
+    lbl.textContent = count > 1 ? roll + " ×" + count : roll;
+    opt.classList.toggle("active", count > 0);
+  });
   $("pkgCount").textContent = "Seleccionados: " + (pkgSelected.join(" + ") || "ninguno");
   const btn = $("pkgAdd");
-  btn.disabled = pkgSelected.length !== 2;
-  btn.textContent = pkgSelected.length === 2 ? "Agregar " + fmt(150) : "Agregar (" + pkgSelected.length + "/2)";
+  btn.disabled = pkgSelected.length !== n;
+  btn.textContent = pkgSelected.length === n ? "Agregar " + fmt(pendingPkg.item.price) : "Agregar (" + pkgSelected.length + "/" + n + ")";
 }
 function confirmPackage() {
-  if (!pendingPkg || pkgSelected.length !== 2) return;
+  const n = pkgCountOf(pendingPkg ? pendingPkg.item : null);
+  if (!pendingPkg || pkgSelected.length !== n) return;
   const { ci, ii, item } = pendingPkg;
   const sorted = pkgSelected.slice().sort();
   const key = "pkg:" + ci + ":" + ii + ":" + sorted.join("+");
@@ -385,7 +391,7 @@ function confirmPackage() {
   } else {
     cart.push({
       key,
-      name: item.name + " · " + sorted[0] + " + " + sorted[1],
+      name: item.name + " · " + sorted.join(" + "),
       price: item.price,
       qty: 1
     });

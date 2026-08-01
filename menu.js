@@ -125,7 +125,13 @@ const MENU = [
   {
     name: "Promo 2x$150",
     items: [
-      { name: "2 Rollos x $150", desc: "Elige 2 rollos de: Banana Roll, California, Furai, Kiroi Pollito, Chipotle Roll o Philadelphia. Puedes repetir el mismo.", price: 150, package: { rolls: ["Banana Roll", "California", "Furai", "Kiroi Pollito", "Chipotle Roll", "Philadelphia"] } }
+      { name: "2 Rollos x $150", desc: "Elige 2 rollos de: Banana Roll, California, Furai de Surimi, Furai de Pollo, Kiroi Pollito, Chipotle Roll o Philadelphia. Puedes repetir el mismo.", price: 150, package: { count: 2, rolls: ["Banana Roll", "California", "Furai de Surimi", "Furai de Pollo", "Kiroi Pollito", "Chipotle Roll", "Philadelphia"] } }
+    ]
+  },
+  {
+    name: "Super Paquete",
+    items: [
+      { name: "Super Paquete 4 Rollos x $369", desc: "Elige 4 rollos de: Furai de Pollo, Furai de Surimi, Kiroi Pollito, California, Banana Roll, Chipotle Roll u Okinawa. Puedes repetir el mismo. Incluye 3 onigiris empanizados rellenos de queso philadelphia, 1 orden de papas a la francesa y 2 bebidas Nestea.", price: 369, package: { count: 4, rolls: ["Furai de Pollo", "Furai de Surimi", "Kiroi Pollito", "California", "Banana Roll", "Chipotle Roll", "Okinawa"] } }
     ]
   },
   {
