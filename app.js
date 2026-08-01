@@ -73,6 +73,18 @@ function getPrice(item, variant) {
   return variant ? variant.price : item.price;
 }
 
+function basePrice(item) {
+  if (typeof item.price === "number") return item.price;
+  if (item.variants && item.variants.length) {
+    return Math.min(...item.variants.map(v => v.price));
+  }
+  return 0;
+}
+
+function priceLabel(item) {
+  return typeof item.price === "number" ? fmt(item.price) : "Desde " + fmt(basePrice(item));
+}
+
 function cartItemName(item, variant) {
   return item.name + (variant ? " · " + variant.label : "");
 }
@@ -233,7 +245,7 @@ function featuredCard(ci, ii, item) {
 
   const p = document.createElement("div");
   p.className = "f-price";
-  p.textContent = fmt(item.price);
+  p.textContent = priceLabel(item);
   div.appendChild(p);
 
   const area = document.createElement("div");
@@ -265,7 +277,7 @@ function itemCard(ci, ii, item) {
   }
   const pr = document.createElement("div");
   pr.className = "item-price";
-  pr.textContent = fmt(item.price);
+  pr.textContent = priceLabel(item);
   info.appendChild(pr);
   div.appendChild(info);
 
