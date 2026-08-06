@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#e8367c">
+<link rel="icon" type="image/png" href="logo.png">
+<title>Sakura Sushi · Pide por WhatsApp</title>
+<meta name="description" content="Pide en Sakura Sushi Paseos Mid por WhatsApp. Sushi, ramen, rollos y más.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="hero">
+    <img class="hero-logo" src="logo.png" alt="Sakura Sushi">
+    <span class="hero-badge">🍣 Sushi · Ramen · Rollos</span>
+    <h1>Sakura Sushi</h1>
+    <p class="hero-sub">Paseos Mid · Pide por WhatsApp y recoge en el restaurante</p>
+    <div class="hero-actions">
+      <a class="hero-phone" href="tel:+529993614410">📞 999 361 4410</a>
+      <button class="hero-cart" onclick="openDrawer()">🛒<span class="badge hidden" id="badge">0</span></button>
+    </div>
+  </div>
+  <nav id="cats"></nav>
+</header>
+
+<main id="menu"></main>
+
+<div class="float-cart hidden" id="floatCart" onclick="openDrawer()">
+  <div class="fc-left"><span class="fc-icon">🛒</span><span>Ver pedido</span></div>
+  <div class="fc-right"><span id="fcTotal">$0</span><button class="go" onclick="event.stopPropagation();goCheckout()">Pagar</button></div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-head">
+    <b>Tu pedido</b>
+    <div class="dh-right">
+      <button class="clear-btn hidden" id="clearBtn" onclick="clearCart()">Vaciar</button>
+      <button class="close-btn" onclick="closeDrawer()">✕</button>
+    </div>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+  <div class="drawer-foot" id="drawerFoot">
+    <div class="total-row"><span>Total</span><span id="drawerTotal">$0</span></div>
+    <button class="btn btn-primary" onclick="goCheckout()">Continuar</button>
+  </div>
+</div>
+
+<div class="sheet hidden" id="sheet">
+  <h3 id="sheetName"></h3>
+  <div class="sheet-desc" id="sheetDesc"></div>
+  <div id="sheetOptions"></div>
+  <button class="btn btn-primary" onclick="confirmVariant()">Agregar</button>
+</div>
+
+<div class="sheet hidden" id="pkgSheet">
+  <h3 id="pkgTitle"></h3>
+  <div class="sheet-desc" id="pkgDesc"></div>
+  <div id="pkgOptions"></div>
+  <div class="pkg-count" id="pkgCount">Seleccionados: 0 de 2</div>
+  <button class="btn btn-primary" id="pkgAdd" onclick="confirmPackage()" disabled>Agregar</button>
+</div>
+
+<div class="checkout hidden" id="checkout">
+  <button class="back-link" onclick="goBack()">← Volver al menú</button>
+  <h2>Datos de tu pedido</h2>
+
+  <div class="field">
+    <label>Nombre *</label>
+    <input type="text" id="fName" placeholder="Tu nombre">
+  </div>
+  <div class="field">
+    <label>Teléfono *</label>
+    <input type="tel" id="fPhone" placeholder="Ej. 999 123 4567">
+  </div>
+  <div class="field">
+    <label>¿Cómo lo quieres?</label>
+    <div class="seg">
+      <div class="opt active" id="optLlevar" onclick="setType('llevar')">🛍️ Para llevar</div>
+      <div class="opt" id="optDomicilio" onclick="setType('domicilio')">🛵 A domicilio</div>
+    </div>
+    <div class="delivery-note hidden" id="deliveryNote">🛵 Los pedidos a domicilio tienen un <b>costo extra por envío</b> según tu ubicación. Al enviar, <b>adjunta tu ubicación</b> en WhatsApp.</div>
+  </div>
+  <div id="fieldAddress" class="hidden">
+    <div class="field">
+      <label>Calle *</label>
+      <input type="text" id="fCalle" placeholder="Ej. Av. Prolongación Montejo">
+    </div>
+    <div class="field">
+      <label>Número de casa *</label>
+      <input type="text" id="fNumero" placeholder="Ej. 245">
+    </div>
+    <div class="field">
+      <label>Cruzamiento *</label>
+      <input type="text" id="fCruzamiento" placeholder="Ej. con Calle 60">
+    </div>
+    <div class="field">
+      <label>Especificación (opcional)</label>
+      <input type="text" id="fEspec" placeholder="Ej. portón negro, casa de rejas...">
+    </div>
+  </div>
+  <div class="field">
+    <label>Método de pago</label>
+    <div class="seg">
+      <div class="opt active" id="optEfectivo" onclick="setPayment('Efectivo')">💵 Efectivo</div>
+      <div class="opt" id="optTransferencia" onclick="setPayment('Transferencia')">🏦 Transferencia</div>
+    </div>
+  </div>
+  <div class="field">
+    <label>Cambios a tu platillo (opcional)</label>
+    <textarea id="fNotes" placeholder="Escribe el nombre del platillo y el cambio que le quieres hacer. Ej: Dragon sin cebollín / Okinawa extra queso"></textarea>
+  </div>
+  <div class="field">
+    <label>Comentario para tus salsas (opcional)</label>
+    <input type="text" id="fSalsas" placeholder="Ej. poca salsa picante, salsa extra">
+  </div>
+  <div class="field">
+    <label>¿Gustas palitos para comer sushi?</label>
+    <div class="seg">
+      <div class="opt active" id="optPalitosSi" onclick="setPalitos('Si')">🥢 Sí</div>
+      <div class="opt" id="optPalitosNo" onclick="setPalitos('No')">No</div>
+    </div>
+  </div>
+
+  <div class="order-sum">
+    <h3>Resumen</h3>
+    <div id="checkoutItems"></div>
+    <div class="os-total"><span>Total</span><span id="checkoutTotal">$0</span></div>
+    <button class="edit-order" onclick="editOrder()">✏️ Editar o quitar platillos</button>
+  </div>
+
+  <button class="btn btn-green" onclick="sendWhatsApp()">📲 Enviar pedido por WhatsApp</button>
+  <div class="wa-note">Se abrirá WhatsApp con tu pedido listo, solo presiona <b>enviar</b>.<br>Si eres alérgico a algún alimento, escríbelo en "Cambios a tu platillo".</div>
+</div>
+
+<footer>🍣 Sakura Sushi Paseos Mid · 999 361 4410<span class="allergy">⚠️ Si eres alérgico a algún alimento, notifícalo</span><a class="card-link" href="sakura-card.png" target="_blank">🖼 Ver tarjeta de marca</a></footer>
+
+<script src="js/core/container.js"></script>
+<script src="js/core/observable.js"></script>
+<script src="js/config/brand-config.js"></script>
+<script src="js/models/cart-item.js"></script>
+<script src="js/data/menu-data.js"></script>
+<script src="js/repositories/storage-repository.js"></script>
+<script src="js/repositories/cart-repository.js"></script>
+<script src="js/repositories/loyalty-repository.js"></script>
+<script src="js/repositories/order-repository.js"></script>
+<script src="js/services/currency-service.js"></script>
+<script src="js/services/gradient-service.js"></script>
+<script src="js/services/catalog-service.js"></script>
+<script src="js/services/cart-service.js"></script>
+<script src="js/services/loyalty-service.js"></script>
+<script src="js/services/order-service.js"></script>
+<script src="js/services/checkout-service.js"></script>
+<script src="js/viewmodels/catalog-vm.js"></script>
+<script src="js/viewmodels/cart-vm.js"></script>
+<script src="js/viewmodels/loyalty-vm.js"></script>
+<script src="js/viewmodels/checkout-vm.js"></script>
+<script src="js/viewmodels/package-vm.js"></script>
+<script src="js/views/menu-view.js"></script>
+<script src="js/views/drawer-view.js"></script>
+<script src="js/views/checkout-view.js"></script>
+<script src="js/views/sheet-view.js"></script>
+<script src="js/views/app-view.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
