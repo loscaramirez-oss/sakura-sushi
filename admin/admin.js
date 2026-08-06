@@ -1,10 +1,9 @@
 /* ============================================================
    Configuración del panel admin.
-   Pega aquí los datos de tu proyecto Supabase y elige un PIN.
+   Pega aquí los datos de tu proyecto Supabase.
    ============================================================ */
 const SUPABASE_URL = "https://edquyomwiiaawqslsisd.supabase.co";
 const SUPABASE_KEY = "sb_publishable_aIIwHt4T8cDIeZjy48hRxQ_sdY7_QIf";
-const PIN = "1234";
 
 /* ============================================================
    Panel de pedidos de Sakura Sushi.
@@ -19,6 +18,14 @@ const PIN = "1234";
     "apikey": SUPABASE_KEY,
     "Authorization": "Bearer " + SUPABASE_KEY
   };
+
+  const SESSION = "sakuraAdmin";
+
+  async function sha256(text) {
+    const enc = new TextEncoder().encode(text);
+    const buf = await crypto.subtle.digest("SHA-256", enc);
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+  }
 
   const BRAND = (window.PosApp && window.PosApp.brandConfig) || {
     business: "Sakura Sushi Paseos Mid",
@@ -483,7 +490,7 @@ const PIN = "1234";
     $("showArch").addEventListener("change", e => { state.showArch = e.target.checked; render(); });
     $("csvBtn").addEventListener("click", downloadCsv);
     $("logoutBtn").addEventListener("click", () => {
-      sessionStorage.removeItem("sakuraAdminAuth");
+      sessionStorage.removeItem(SESSION);
       location.reload();
     });
 
@@ -543,39 +550,118 @@ const PIN = "1234";
       renderCart();
     });
 
-    $("pinBtn").addEventListener("click", doLogin);
-    $("pinInput").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
+    $("loginBtn").addEventListener("click", doLogin);
+    $("loginPass").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
+    $("loginUser").addEventListener("keydown", e => { if (e.key === "Enter") $("loginPass").focus(); });
+
+    /* ---------- Usuarios ---------- */
+    $("usersBtn").addEventListener("click", () => {
+      $("usersModal").classList.remove("hidden");
+      fetchUsers();
+    });
+    $("closeUsersBtn").addEventListener("click", () => $("usersModal").classList.add("hidden"));
+    $("addUserBtn").addEventListener("click", addUser);
+
+    function fetchUsers() {
+      fetch(API.replace("/orders", "/usuarios") + "?select=*&order=username", { headers: HEADERS })
+        .then(r => r.json()).then(rows => {
+          $("usersList").innerHTML = rows.map(u =>
+            '<div class="user-row">' +
+              '<span><span class="u-name">' + esc(u.nombre) + '</span>' +
+              '<span class="u-rol">@' + esc(u.username) + ' · ' + (u.rol || 'cajero').toUpperCase() + '</span>' +
+              (u.activo ? '' : ' <span style="color:#c62828;font-weight:700">INACTIVO</span>') +
+              '</span>' +
+              '<span class="u-btns">' +
+                '<button class="btn-sm danger" data-uid="' + u.id + '" data-act="toggle" data-val="' + !u.activo + '">' + (u.activo ? 'Desactivar' : 'Activar') + '</button>' +
+              '</span>' +
+            '</div>'
+          ).join("");
+          document.querySelectorAll(".u-btns button").forEach(b => {
+            b.addEventListener("click", () => {
+              const uid = b.dataset.uid;
+              const val = b.dataset.val === "true";
+              fetch(API.replace("/orders", "/usuarios") + "?id=eq." + uid, {
+                method: "PATCH",
+                headers: Object.assign({ "Content-Type": "application/json", "Prefer": "return=minimal" }, HEADERS),
+                body: JSON.stringify({ activo: val })
+              }).then(() => {
+                toast(val ? "Usuario activado" : "Usuario desactivado");
+                fetchUsers();
+              }).catch(() => toast("Error al actualizar usuario"));
+            });
+          });
+        }).catch(() => toast("Error al cargar usuarios"));
+    }
+
+    function addUser() {
+      const username = $("umUser").value.trim();
+      const nombre = $("umName").value.trim();
+      const pass = $("umPass").value;
+      const rol = $("umRol").value;
+      if (!username || !nombre || !pass || pass.length < 4) {
+        toast("Completa todos los campos (contraseña mínimo 4 caracteres)");
+        return;
+      }
+      sha256(pass).then(hash => {
+        return fetch(API.replace("/orders", "/usuarios"), {
+          method: "POST",
+          headers: Object.assign({ "Content-Type": "application/json", "Prefer": "return=minimal" }, HEADERS),
+          body: JSON.stringify({ username, password_hash: hash, nombre, rol })
+        });
+      }).then(r => {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        toast("Usuario " + username + " creado");
+        $("umUser").value = ""; $("umName").value = ""; $("umPass").value = "";
+        fetchUsers();
+      }).catch(() => toast("Error al crear usuario (¿el nombre de usuario ya existe?)"));
+    }
   }
 
-  function doLogin() {
-    if ($("pinInput").value === PIN) {
-      sessionStorage.setItem("sakuraAdminAuth", "1");
-      $("pinScreen").classList.add("hidden");
-      $("app").classList.remove("hidden");
-      if ("Notification" in window && Notification.permission !== "granted") {
-        Notification.requestPermission();
-      }
-      refresh();
-      start();
-    } else {
-      $("pinErr").classList.remove("hidden");
-      $("pinInput").value = "";
+  async function doLogin() {
+    const u = $("loginUser").value.trim();
+    const p = $("loginPass").value;
+    if (!u || !p) return;
+    try {
+      const hash = await sha256(p);
+      const r = await fetch(API.replace("/orders", "/usuarios") + "?username=eq." + encodeURIComponent(u) + "&select=*&limit=1", {
+        headers: HEADERS
+      });
+      const rows = await r.json();
+      const user = rows[0];
+      if (!user || user.password_hash !== hash || !user.activo) throw new Error("invalid");
+      const sess = { username: user.username, nombre: user.nombre, rol: user.rol };
+      sessionStorage.setItem(SESSION, JSON.stringify(sess));
+      showApp(sess);
+    } catch (e) {
+      $("loginErr").classList.remove("hidden");
+      $("loginPass").value = "";
     }
+  }
+
+  function showApp(user) {
+    $("pinScreen").classList.add("hidden");
+    $("app").classList.remove("hidden");
+    $("hdUserName").textContent = user.nombre;
+    $("hdUserRol").textContent = user.rol;
+    if (user.rol === "admin") $("usersBtn").style.display = "";
+    if ("Notification" in window && Notification.permission !== "granted") {
+      Notification.requestPermission();
+    }
+    refresh();
+    start();
   }
 
   function init() {
     if (!SUPABASE_URL || !SUPABASE_KEY) {
       $("pinScreen").classList.add("hidden");
-      $("app").classList.remove("hidden");
-      $("orders").innerHTML = '<div class="empty">Falta la configuración de Supabase.<br>Abre admin/admin.js y pega SUPABASE_URL y SUPABASE_KEY.</div>';
+      $("orders").innerHTML = '<div class="empty">Falta la configuración de Supabase.</div>';
       return;
     }
-    if (sessionStorage.getItem("sakuraAdminAuth") === "1") {
-      $("pinScreen").classList.add("hidden");
-      $("app").classList.remove("hidden");
-      refresh();
-      start();
-    }
+    const raw = sessionStorage.getItem(SESSION);
+    try {
+      const user = JSON.parse(raw);
+      if (user && user.username) return showApp(user);
+    } catch (e) {}
     wire();
   }
 

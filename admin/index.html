@@ -18,9 +18,10 @@
     <img src="../logo.png" alt="Sakura Sushi" class="pin-logo">
     <h1>Panel de pedidos</h1>
     <p>Sakura Sushi Paseos Mid</p>
-    <input type="password" id="pinInput" inputmode="numeric" maxlength="6" placeholder="PIN" autocomplete="off">
-    <button class="btn btn-primary" id="pinBtn">Entrar</button>
-    <div class="pin-err hidden" id="pinErr">PIN incorrecto</div>
+    <input type="text" id="loginUser" placeholder="Usuario" autocomplete="off" autofocus>
+    <input type="password" id="loginPass" placeholder="Contraseña">
+    <button class="btn btn-primary" id="loginBtn">Entrar</button>
+    <div class="pin-err hidden" id="loginErr">Usuario o contraseña incorrectos</div>
   </div>
 </div>
 
@@ -32,8 +33,13 @@
         <h1>Panel de pedidos</h1>
         <div class="hd-sub">Sakura Sushi Paseos Mid</div>
       </div>
+      <div class="hd-user">
+        <span id="hdUserName"></span>
+        <span class="hd-rol" id="hdUserRol"></span>
+      </div>
     </div>
     <div class="hd-actions">
+      <button class="btn btn-primary" id="usersBtn" style="display:none">👥 Usuarios</button>
       <button class="btn btn-primary" id="newOrderBtn">➕ Nuevo pedido</button>
       <label class="switch" title="Sonido al llegar un pedido">
         <input type="checkbox" id="soundToggle" checked>
@@ -126,6 +132,42 @@
     </div>
     <div class="modal-foot">
       <button class="btn btn-primary" id="saveOrderBtn">📨 Guardar y enviar a cocina</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal hidden" id="usersModal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2>👥 Gestión de usuarios</h2>
+      <button class="btn ghost" id="closeUsersBtn">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="frow">
+        <label>Usuario</label>
+        <input type="text" id="umUser" placeholder="Nombre de usuario">
+      </div>
+      <div class="frow">
+        <label>Nombre completo</label>
+        <input type="text" id="umName" placeholder="Ej. María López">
+      </div>
+      <div class="frow">
+        <label>Contraseña</label>
+        <input type="password" id="umPass" placeholder="Mínimo 4 caracteres">
+      </div>
+      <div class="frow">
+        <label>Rol</label>
+        <select id="umRol">
+          <option value="cajero">Cajero</option>
+          <option value="admin">Administrador</option>
+          <option value="cocina">Cocina</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" id="addUserBtn" style="width:100%;margin-top:12px">➕ Agregar usuario</button>
+      <div style="margin-top:16px">
+        <h3>Usuarios</h3>
+        <div id="usersList"></div>
+      </div>
     </div>
   </div>
 </div>
