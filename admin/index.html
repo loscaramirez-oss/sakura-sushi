@@ -203,6 +203,29 @@
   </div>
 </div>
 
+<div class="modal hidden" id="cobroModal">
+  <div class="modal-card" style="max-width:400px">
+    <div class="modal-head">
+      <h2>💵 Cobrar pedido</h2>
+      <button class="btn ghost" id="closeCobroBtn">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="cobroInfo" style="text-align:center;margin-bottom:16px"></div>
+      <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:8px">MÉTODO DE PAGO</label>
+      <div class="pay-methods" id="payMethods">
+        <button class="pay-btn" data-m="efectivo">💵<span>Efectivo</span></button>
+        <button class="pay-btn" data-m="tarjeta">💳<span>Tarjeta</span></button>
+        <button class="pay-btn" data-m="transferencia">🏦<span>Transf.</span></button>
+        <button class="pay-btn" data-m="didi">🛵<span>DIDI</span></button>
+        <button class="pay-btn" data-m="uber">🚗<span>Uber</span></button>
+        <button class="pay-btn" data-m="rappi">📦<span>Rappi</span></button>
+      </div>
+      <div id="cobroFields" style="margin-top:14px"></div>
+      <button class="btn btn-green" id="confirmCobroBtn" style="width:100%;margin-top:14px;padding:13px;font-size:15px">💵 Confirmar cobro</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast hidden" id="toast"></div>
 <div class="print-area" id="printArea"></div>
 

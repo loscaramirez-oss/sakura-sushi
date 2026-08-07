@@ -244,6 +244,21 @@ button { font-family: inherit; cursor: pointer; }
 .turno-badge { display:inline-block; border:none; border-radius:10px; padding:6px 12px; font-size:12px; font-weight:800; cursor:pointer; background:rgba(0,0,0,.25); color:#fff; }
 .turno-badge:hover { background:rgba(0,0,0,.4); }
 
+/* ---------- Cobro ---------- */
+.cobro-total { font-size:32px; font-weight:800; color:var(--primary); }
+.pay-methods { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; }
+.pay-btn {
+  border:1.5px solid var(--border); background:var(--card); border-radius:12px;
+  padding:10px 4px; cursor:pointer; display:flex; flex-direction:column; align-items:center;
+  gap:2px; font-size:20px; transition:all .15s;
+}
+.pay-btn span { font-size:10px; font-weight:700; color:var(--muted); }
+.pay-btn.on { border-color:var(--primary); background:#fff0f5; box-shadow:0 3px 12px rgba(232,54,124,.18); }
+.pay-btn.on span { color:var(--primary); }
+.pay-btn:active { transform:scale(.95); }
+.btn-green { background:linear-gradient(135deg,#25d366,#1eb958); color:#fff; }
+.btn-green:active { transform:scale(.97); }
+
 @media print {
   body > *:not(#printArea) { display: none !important; }
   .print-area { display: block !important; position: absolute; left: 0; top: 0; width: 80mm; }

@@ -387,6 +387,7 @@ const SUPABASE_KEY = "sb_publishable_aIIwHt4T8cDIeZjy48hRxQ_sdY7_QIf";
       '<div class="c-total">Total <b>' + money(o.total) + "</b></div>" +
       '<div class="c-actions">' + flowBtns +
         '<button class="fbtn print" data-id="' + o.id + '" data-act="print">🖨</button>' +
+        '<button class="fbtn cobro" data-id="' + o.id + '" data-act="cobro">💵 Cobrar</button>' +
         '<button class="fbtn archive" data-id="' + o.id + '" data-s="archivado">🗂</button>' +
       "</div>" +
     "</div>";
@@ -474,6 +475,11 @@ const SUPABASE_KEY = "sb_publishable_aIIwHt4T8cDIeZjy48hRxQ_sdY7_QIf";
       if (btn.dataset.act === "print") {
         const o = state.orders.find(x => x.id === id);
         if (o) printTicket(o);
+        return;
+      }
+      if (btn.dataset.act === "cobro") {
+        const o = state.orders.find(x => x.id === id);
+        if (o) abrirCobro(o);
         return;
       }
       const s = btn.dataset.s;
@@ -621,6 +627,88 @@ const SUPABASE_KEY = "sb_publishable_aIIwHt4T8cDIeZjy48hRxQ_sdY7_QIf";
         .then(() => { toast(editId ? "Producto actualizado" : "Producto creado"); $("pmCat").value = ""; $("pmName").value = ""; $("pmPrice").value = ""; $("pmDesc").value = ""; $("pmEstacion").value = ""; $("addProductBtn").textContent = "➕ Agregar producto"; delete $("addProductBtn").dataset.editId; fetchProducts(); })
         .catch(() => toast("Error al guardar"));
     }
+  }
+
+  /* ---------- Cobrar ---------- */
+  var cobroState = { method: "efectivo", order: null };
+
+  $("closeCobroBtn").addEventListener("click", () => $("cobroModal").classList.add("hidden"));
+  $("payMethods").addEventListener("click", e => {
+    var b = e.target.closest(".pay-btn");
+    if (!b) return;
+    cobroState.method = b.dataset.m;
+    document.querySelectorAll(".pay-btn").forEach(x => x.classList.remove("on"));
+    b.classList.add("on");
+    renderCobroFields();
+  });
+  $("confirmCobroBtn").addEventListener("click", confirmarCobro);
+
+  function abrirCobro(o) {
+    cobroState.order = o;
+    cobroState.method = "efectivo";
+    $("cobroInfo").innerHTML = '<div class="cobro-total">' + money(o.total) + '</div>' +
+      '<div style="font-size:13px;color:var(--muted)">Pedido #' + esc(o.folio) + ' · ' + esc(o.name) + '</div>';
+    $("cobroModal").classList.remove("hidden");
+    document.querySelectorAll(".pay-btn").forEach(x => x.classList.remove("on"));
+    var defBtn = document.querySelector('.pay-btn[data-m="efectivo"]');
+    if (defBtn) defBtn.classList.add("on");
+    renderCobroFields();
+  }
+
+  function renderCobroFields() {
+    var m = cobroState.method;
+    var total = cobroState.order ? cobroState.order.total : 0;
+    var html = "";
+    if (m === "efectivo") {
+      html += '<div class="frow"><label>Monto recibido</label><input type="number" id="cobroMonto" value="' + total + '" min="0" oninput="updateCambio()"></div>';
+      html += '<div id="cobroCambio" style="text-align:center;font-size:15px;font-weight:700;margin:8px 0;color:var(--green)">Cambio: $0</div>';
+      html += '<div class="frow"><label>Propina (opcional)</label><input type="number" id="cobroPropina" value="0" min="0" oninput="updateCambio()"></div>';
+    } else if (m === "tarjeta" || m === "transferencia") {
+      html += '<div class="frow"><label>Referencia / Últimos dígitos</label><input type="text" id="cobroRef" placeholder="Ej. 4521"></div>';
+      html += '<div class="frow"><label>Propina (opcional)</label><input type="number" id="cobroPropina" value="0" min="0"></div>';
+    } else {
+      html += '<div class="frow"><label>Referencia / Comisión (opcional)</label><input type="text" id="cobroRef" placeholder="Ej. Comisión 30%"></div>';
+    }
+    $("cobroFields").innerHTML = html;
+  }
+
+  window.updateCambio = function () {
+    var monto = parseInt(document.getElementById("cobroMonto").value, 10) || 0;
+    var propina = parseInt(document.getElementById("cobroPropina").value, 10) || 0;
+    var total = cobroState.order ? cobroState.order.total : 0;
+    var cambio = monto - total - propina;
+    var el = document.getElementById("cobroCambio");
+    if (el) el.textContent = cambio >= 0 ? "Cambio: " + money(cambio) : "Faltan: " + money(-cambio);
+  };
+
+  async function confirmarCobro() {
+    var o = cobroState.order;
+    if (!o) return;
+    var m = cobroState.method;
+    var metodoLabel = { efectivo: "Efectivo", tarjeta: "Tarjeta", transferencia: "Transferencia", didi: "DIDI", uber: "Uber", rappi: "Rappi" }[m] || m;
+    var detalle = "";
+    var propina = parseInt((document.getElementById("cobroPropina") || {}).value, 10) || 0;
+    if (m === "efectivo") {
+      var recibido = parseInt((document.getElementById("cobroMonto") || {}).value, 10) || 0;
+      var cambio = recibido - o.total - propina;
+      if (cambio < 0) { toast("El monto recibido no cubre el total + propina"); return; }
+      detalle = "Recibido: " + recibido + " | Cambio: " + cambio + (propina ? " | Propina: " + propina : "");
+    } else {
+      var ref = (document.getElementById("cobroRef") || {}).value || "";
+      detalle = (ref ? "Ref: " + ref + " | " : "") + (propina ? "Propina: " + propina : "");
+    }
+    var nota = (o.notes || "");
+    if (nota) nota += " | ";
+    nota += "PAGO: " + metodoLabel + " | " + detalle;
+    try {
+      await fetch(API + "?id=eq." + o.id, {
+        method: "PATCH", headers: Object.assign({ "Content-Type": "application/json", "Prefer": "return=minimal" }, HEADERS),
+        body: JSON.stringify({ payment: metodoLabel, notes: nota })
+      });
+      $("cobroModal").classList.add("hidden");
+      toast("Cobro registrado: " + metodoLabel);
+      refresh();
+    } catch (e) { toast("Error al guardar cobro"); }
   }
 
   async function doLogin() {
