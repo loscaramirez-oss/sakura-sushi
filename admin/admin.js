@@ -632,16 +632,21 @@ const SUPABASE_KEY = "sb_publishable_aIIwHt4T8cDIeZjy48hRxQ_sdY7_QIf";
   /* ---------- Cobrar ---------- */
   var cobroState = { method: "efectivo", order: null };
 
-  $("closeCobroBtn").addEventListener("click", () => $("cobroModal").classList.add("hidden"));
-  $("payMethods").addEventListener("click", e => {
-    var b = e.target.closest(".pay-btn");
-    if (!b) return;
-    cobroState.method = b.dataset.m;
-    document.querySelectorAll(".pay-btn").forEach(x => x.classList.remove("on"));
-    b.classList.add("on");
-    renderCobroFields();
-  });
-  $("confirmCobroBtn").addEventListener("click", confirmarCobro);
+  function initCobro() {
+    var cb = $("closeCobroBtn");
+    var pm = $("payMethods");
+    var cf = $("confirmCobroBtn");
+    if (cb) cb.addEventListener("click", () => $("cobroModal").classList.add("hidden"));
+    if (pm) pm.addEventListener("click", e => {
+      var b = e.target.closest(".pay-btn");
+      if (!b) return;
+      cobroState.method = b.dataset.m;
+      document.querySelectorAll(".pay-btn").forEach(x => x.classList.remove("on"));
+      b.classList.add("on");
+      renderCobroFields();
+    });
+    if (cf) cf.addEventListener("click", confirmarCobro);
+  }
 
   function abrirCobro(o) {
     cobroState.order = o;
@@ -756,6 +761,7 @@ const SUPABASE_KEY = "sb_publishable_aIIwHt4T8cDIeZjy48hRxQ_sdY7_QIf";
     refresh();
     start();
     checkTurno();
+    initCobro();
   }
 
   /* ---------- Turnos ---------- */
