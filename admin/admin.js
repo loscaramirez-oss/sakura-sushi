@@ -53,7 +53,8 @@ const SUPABASE_KEY = "sb_publishable_aIIwHt4T8cDIeZjy48hRxQ_sdY7_QIf";
     showArch: false,
     pollTimer: null,
     autoPrint: true,
-    pCat: 0
+    pCat: 0,
+    turno: null
   };
 
   let newOrder = null;
@@ -654,7 +655,90 @@ const SUPABASE_KEY = "sb_publishable_aIIwHt4T8cDIeZjy48hRxQ_sdY7_QIf";
     }
     refresh();
     start();
+    checkTurno();
   }
+
+  /* ---------- Turnos ---------- */
+  async function checkTurno() {
+    try {
+      const r = await fetch(API.replace("/orders", "/turnos") + "?marca=eq." + encodeURIComponent(BRAND.marca || "") + "&estado=eq.abierto&select=*&order=abierto_en.desc&limit=1", { headers: HEADERS });
+      const rows = await r.json();
+      state.turno = rows[0] || null;
+    } catch (e) { state.turno = null; }
+    $("turnoBadge").textContent = state.turno ? "🟢 Turno abierto " + fmtTime(state.turno.abierto_en) : "🔴 Sin turno";
+  }
+
+  function renderTurnoModal(user) {
+    if (!state.turno) {
+      $("turnoTitle").textContent = "🕐 Abrir turno";
+      $("turnoBody").innerHTML =
+        '<div class="frow"><label>Efectivo inicial</label><input type="number" id="tmEfectivoIni" value="0" min="0"></div>' +
+        '<button class="btn btn-primary" id="tmAbrirBtn" style="width:100%;margin-top:12px">🔓 Abrir turno</button>';
+      $("tmAbrirBtn").addEventListener("click", () => abrirTurno(user));
+    } else {
+      const ventas = state.orders.filter(o => o.created_at >= state.turno.abierto_en && o.status !== "cancelado").reduce((a, o) => a + (o.total || 0), 0);
+      $("turnoTitle").textContent = "🔒 Cerrar turno";
+      $("turnoBody").innerHTML =
+        '<div style="background:var(--bg);border-radius:12px;padding:14px;margin-bottom:12px">' +
+          '<div style="display:flex;justify-content:space-between"><span>Abierto:</span><b>' + fmtTime(state.turno.abierto_en) + '</b></div>' +
+          '<div style="display:flex;justify-content:space-between"><span>Por:</span><b>' + esc(state.turno.usuario_nombre) + '</b></div>' +
+          '<div style="display:flex;justify-content:space-between;margin-top:8px;font-size:18px"><span>Ventas esperadas:</span><b style="color:var(--green)">' + money(ventas) + '</b></div>' +
+          '<div style="display:flex;justify-content:space-between"><span>Efectivo inicial:</span><b>' + money(state.turno.efectivo_inicial) + '</b></div>' +
+          '<div style="display:flex;justify-content:space-between;border-top:1px dashed var(--border);margin-top:4px;padding-top:4px"><span>Total esperado:</span><b>' + money(ventas + state.turno.efectivo_inicial) + '</b></div>' +
+        '</div>' +
+        '<div class="frow"><label>Efectivo real contado</label><input type="number" id="tmEfectivoReal" value="' + (ventas + state.turno.efectivo_inicial) + '" min="0" step="1"></div>' +
+        '<div class="frow"><label>Notas</label><input type="text" id="tmNotas" placeholder="Opcional"></div>' +
+        '<div id="tmDiferencia" style="text-align:center;font-size:16px;margin:8px 0"></div>' +
+        '<button class="btn btn-primary" id="tmCerrarBtn" style="width:100%">🔒 Cerrar turno</button>';
+      $("tmEfectivoReal").addEventListener("input", function () {
+        const real = parseInt(this.value) || 0;
+        const esperado = ventas + (state.turno.efectivo_inicial || 0);
+        const dif = real - esperado;
+        $("tmDiferencia").innerHTML = dif === 0 ? '<span style="color:var(--green)">✅ Cuadrado</span>' :
+          (dif > 0 ? '<span style="color:var(--green)">📈 Sobrante: ' + money(dif) + '</span>' : '<span style="color:#c62828">📉 Faltante: ' + money(-dif) + '</span>');
+      });
+      $("tmEfectivoReal").dispatchEvent(new Event("input"));
+      $("tmCerrarBtn").addEventListener("click", () => cerrarTurno(ventas));
+    }
+  }
+
+  async function abrirTurno(user) {
+    const ini = parseInt($("tmEfectivoIni").value, 10) || 0;
+    const body = JSON.stringify({ marca: BRAND.marca || "", usuario_id: user.username, usuario_nombre: user.nombre, efectivo_inicial: ini });
+    try {
+      const r = await fetch(API.replace("/orders", "/turnos"), { method: "POST", headers: Object.assign({ "Content-Type": "application/json", "Prefer": "return=minimal" }, HEADERS), body });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      $("turnoModal").classList.add("hidden");
+      toast("Turno abierto");
+      checkTurno();
+    } catch (e) { toast("Error al abrir turno"); }
+  }
+
+  async function cerrarTurno(ventas) {
+    const real = parseInt($("tmEfectivoReal").value, 10) || 0;
+    const notas = ($("tmNotas").value || "").trim();
+    const body = JSON.stringify({
+      estado: "cerrado",
+      cerrado_en: new Date().toISOString(),
+      efectivo_final: real,
+      notas: notas ? (notas + " | Ventas: " + ventas + " | Inicial: " + state.turno.efectivo_inicial + " | Real: " + real) : ("Ventas: " + ventas + " | Real: " + real)
+    });
+    try {
+      await fetch(API.replace("/orders", "/turnos") + "?id=eq." + state.turno.id, { method: "PATCH", headers: Object.assign({ "Content-Type": "application/json", "Prefer": "return=minimal" }, HEADERS), body });
+      $("turnoModal").classList.add("hidden");
+      toast("Turno cerrado. " + money(real));
+      checkTurno();
+    } catch (e) { toast("Error al cerrar turno"); }
+  }
+
+  $("turnoBadge").addEventListener("click", function () {
+    $("turnoModal").classList.remove("hidden");
+    try {
+      const user = JSON.parse(sessionStorage.getItem(SESSION));
+      renderTurnoModal(user);
+    } catch (e) {}
+  });
+  $("closeTurnoBtn").addEventListener("click", () => $("turnoModal").classList.add("hidden"));
 
   function init() {
     if (!SUPABASE_URL || !SUPABASE_KEY) {

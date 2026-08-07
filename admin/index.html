@@ -39,6 +39,7 @@
       </div>
     </div>
     <div class="hd-actions">
+      <span class="turno-badge" id="turnoBadge">🔴 Sin turno</span>
       <button class="btn btn-primary" id="usersBtn" style="display:none">👥 Usuarios</button>
       <button class="btn btn-primary" id="productsBtn" style="display:none">📦 Productos</button>
       <button class="btn btn-primary" id="newOrderBtn">➕ Nuevo pedido</button>
@@ -189,6 +190,16 @@
       <div style="margin-top:16px"><input type="text" id="pmSearch" placeholder="🔍 Buscar producto..." style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:10px"></div>
       <div id="productsList" style="margin-top:10px;max-height:400px;overflow-y:auto"></div>
     </div>
+  </div>
+</div>
+
+<div class="modal hidden" id="turnoModal">
+  <div class="modal-card" style="max-width:420px">
+    <div class="modal-head">
+      <h2 id="turnoTitle">🕐 Abrir turno</h2>
+      <button class="btn ghost" id="closeTurnoBtn">✕</button>
+    </div>
+    <div class="modal-body" id="turnoBody"></div>
   </div>
 </div>
 

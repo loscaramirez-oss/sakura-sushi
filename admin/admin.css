@@ -241,6 +241,7 @@ button { font-family: inherit; cursor: pointer; }
 .btn-sm { border: 1.5px solid var(--border); background: #fff; border-radius: 8px; padding: 4px 10px; font-size: 11px; font-weight: 700; cursor: pointer; }
 .btn-sm.danger { color: #c62828; border-color: #ffcdd2; }
 .btn-sm.danger:hover { background: #ffebee; }
+.turno-badge { display:inline-block; border-radius:10px; padding:6px 12px; font-size:12px; font-weight:800; cursor:pointer; background:rgba(255,255,255,.2); color:#fff; }
 
 @media print {
   body > *:not(#printArea) { display: none !important; }
