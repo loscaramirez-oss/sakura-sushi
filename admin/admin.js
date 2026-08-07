@@ -565,6 +565,9 @@ const SUPABASE_KEY = "sb_publishable_aIIwHt4T8cDIeZjy48hRxQ_sdY7_QIf";
         .then(r => r.json()).then(rows => {
           window._prodCache = rows;
           renderProducts(rows);
+          // poblar datalist de estaciones
+          const ests = [...new Set(rows.map(r => r.estacion || "").filter(Boolean))];
+          $("pmEstList").innerHTML = ests.map(e => '<option value="' + esc(e) + '">').join("");
         }).catch(() => toast("Error al cargar productos"));
     }
 
@@ -575,7 +578,7 @@ const SUPABASE_KEY = "sb_publishable_aIIwHt4T8cDIeZjy48hRxQ_sdY7_QIf";
       $("productsList").innerHTML = filtered.map(p => {
         const catLine = p.categoria !== lastCat ? '<div style="font-weight:800;margin:10px 0 4px;color:var(--primary)">' + esc(p.categoria) + '</div>' : '';
         lastCat = p.categoria;
-        return catLine + '<div class="user-row"><span><span class="u-name">' + esc(p.nombre) + '</span> $' + p.precio + (!p.disponible ? ' <span style="color:#c62828">AGOTADO</span>' : '') + '</span>' +
+        return catLine + '<div class="user-row"><span><span class="u-name">' + esc(p.nombre) + '</span> $' + p.precio + (p.estacion ? '<span class="u-rol">' + esc(p.estacion) + '</span>' : '') + (!p.disponible ? ' <span style="color:#c62828">AGOTADO</span>' : '') + '</span>' +
           '<span class="u-btns"><button class="btn-sm" data-pid="' + p.id + '" data-act="edit">✏️</button>' +
           '<button class="btn-sm danger" data-pid="' + p.id + '" data-act="toggle" data-val="' + !p.disponible + '">' + (p.disponible ? 'Desactivar' : 'Activar') + '</button></span></div>';
       }).join("");
@@ -594,6 +597,7 @@ const SUPABASE_KEY = "sb_publishable_aIIwHt4T8cDIeZjy48hRxQ_sdY7_QIf";
             $("pmName").value = p.nombre;
             $("pmPrice").value = p.precio;
             $("pmDesc").value = p.descripcion || "";
+            $("pmEstacion").value = p.estacion || "";
             $("addProductBtn").textContent = "💾 Guardar cambios";
             $("addProductBtn").dataset.editId = pid;
           }
@@ -606,13 +610,14 @@ const SUPABASE_KEY = "sb_publishable_aIIwHt4T8cDIeZjy48hRxQ_sdY7_QIf";
       const name = $("pmName").value.trim();
       const price = parseInt($("pmPrice").value, 10);
       const desc = $("pmDesc").value.trim();
+      const estacion = $("pmEstacion").value.trim();
       if (!cat || !name || isNaN(price)) { toast("Completa categoría, nombre y precio"); return; }
       const editId = $("addProductBtn").dataset.editId;
-      const body = JSON.stringify({ categoria: cat, nombre: name, precio: price, descripcion: desc, marca: (BRAND.marca || "") });
+      const body = JSON.stringify({ categoria: cat, nombre: name, precio: price, descripcion: desc, estacion: estacion, marca: (BRAND.marca || "") });
       const method = editId ? "PATCH" : "POST";
       const url = editId ? (API.replace("/orders", "/menu_items") + "?id=eq." + editId) : API.replace("/orders", "/menu_items");
       fetch(url, { method, headers: Object.assign({ "Content-Type": "application/json", "Prefer": "return=minimal" }, HEADERS), body })
-        .then(() => { toast(editId ? "Producto actualizado" : "Producto creado"); $("pmCat").value = ""; $("pmName").value = ""; $("pmPrice").value = ""; $("pmDesc").value = ""; $("addProductBtn").textContent = "➕ Agregar producto"; delete $("addProductBtn").dataset.editId; fetchProducts(); })
+        .then(() => { toast(editId ? "Producto actualizado" : "Producto creado"); $("pmCat").value = ""; $("pmName").value = ""; $("pmPrice").value = ""; $("pmDesc").value = ""; $("pmEstacion").value = ""; $("addProductBtn").textContent = "➕ Agregar producto"; delete $("addProductBtn").dataset.editId; fetchProducts(); })
         .catch(() => toast("Error al guardar"));
     }
   }
