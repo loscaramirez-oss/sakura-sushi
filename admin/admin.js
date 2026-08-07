@@ -665,7 +665,7 @@ const SUPABASE_KEY = "sb_publishable_aIIwHt4T8cDIeZjy48hRxQ_sdY7_QIf";
       const rows = await r.json();
       state.turno = rows[0] || null;
     } catch (e) { state.turno = null; }
-    $("turnoBadge").textContent = state.turno ? "🟢 Turno abierto " + fmtTime(state.turno.abierto_en) : "🔴 Sin turno";
+    $("turnoBadge").textContent = state.turno ? "🟢 Turno abierto " + fmtTime(state.turno.abierto_en) : "🔴 Clic para abrir turno";
   }
 
   function renderTurnoModal(user) {
@@ -732,11 +732,11 @@ const SUPABASE_KEY = "sb_publishable_aIIwHt4T8cDIeZjy48hRxQ_sdY7_QIf";
   }
 
   $("turnoBadge").addEventListener("click", function () {
+    let user = null;
+    try { user = JSON.parse(sessionStorage.getItem(SESSION)); } catch (e) {}
+    if (!user) return;
     $("turnoModal").classList.remove("hidden");
-    try {
-      const user = JSON.parse(sessionStorage.getItem(SESSION));
-      renderTurnoModal(user);
-    } catch (e) {}
+    renderTurnoModal(user);
   });
   $("closeTurnoBtn").addEventListener("click", () => $("turnoModal").classList.add("hidden"));
 
