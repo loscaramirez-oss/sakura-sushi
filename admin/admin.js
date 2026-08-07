@@ -653,6 +653,18 @@ const SUPABASE_KEY = "sb_publishable_aIIwHt4T8cDIeZjy48hRxQ_sdY7_QIf";
     if ("Notification" in window && Notification.permission !== "granted") {
       Notification.requestPermission();
     }
+    // Registrar turnoBadge al hacer login
+    var badge = $("turnoBadge");
+    if (badge) {
+      badge.onclick = function () {
+        var raw = sessionStorage.getItem(SESSION);
+        var u = null;
+        try { u = JSON.parse(raw); } catch (e) {}
+        if (!u) { toast("Error de sesión"); return; }
+        $("turnoModal").classList.remove("hidden");
+        renderTurnoModal(u);
+      };
+    }
     refresh();
     start();
     checkTurno();
@@ -731,13 +743,6 @@ const SUPABASE_KEY = "sb_publishable_aIIwHt4T8cDIeZjy48hRxQ_sdY7_QIf";
     } catch (e) { toast("Error al cerrar turno"); }
   }
 
-  $("turnoBadge").addEventListener("click", function () {
-    let user = null;
-    try { user = JSON.parse(sessionStorage.getItem(SESSION)); } catch (e) {}
-    if (!user) return;
-    $("turnoModal").classList.remove("hidden");
-    renderTurnoModal(user);
-  });
   $("closeTurnoBtn").addEventListener("click", () => $("turnoModal").classList.add("hidden"));
 
   function init() {
