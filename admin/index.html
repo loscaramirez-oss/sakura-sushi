@@ -40,6 +40,7 @@
     </div>
     <div class="hd-actions">
       <button class="btn btn-primary" id="usersBtn" style="display:none">👥 Usuarios</button>
+      <button class="btn btn-primary" id="productsBtn" style="display:none">📦 Productos</button>
       <button class="btn btn-primary" id="newOrderBtn">➕ Nuevo pedido</button>
       <label class="switch" title="Sonido al llegar un pedido">
         <input type="checkbox" id="soundToggle" checked>
@@ -168,6 +169,24 @@
         <h3>Usuarios</h3>
         <div id="usersList"></div>
       </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal hidden" id="productsModal">
+  <div class="modal-card" style="max-width:600px">
+    <div class="modal-head">
+      <h2>📦 Gestión de productos</h2>
+      <button class="btn ghost" id="closeProductsBtn">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="frow"><label>Categoría</label><input type="text" id="pmCat" placeholder="Ej. Entradas"></div>
+      <div class="frow"><label>Nombre</label><input type="text" id="pmName" placeholder="Nombre del platillo"></div>
+      <div class="frow"><label>Precio</label><input type="number" id="pmPrice" placeholder="0" min="0"></div>
+      <div class="frow"><label>Descripción</label><input type="text" id="pmDesc" placeholder="Opcional"></div>
+      <button class="btn btn-primary" id="addProductBtn" style="width:100%;margin-top:12px">➕ Agregar producto</button>
+      <div style="margin-top:16px"><input type="text" id="pmSearch" placeholder="🔍 Buscar producto..." style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:10px"></div>
+      <div id="productsList" style="margin-top:10px;max-height:400px;overflow-y:auto"></div>
     </div>
   </div>
 </div>

@@ -554,66 +554,66 @@ const SUPABASE_KEY = "sb_publishable_aIIwHt4T8cDIeZjy48hRxQ_sdY7_QIf";
     $("loginPass").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
     $("loginUser").addEventListener("keydown", e => { if (e.key === "Enter") $("loginPass").focus(); });
 
-    /* ---------- Usuarios ---------- */
-    $("usersBtn").addEventListener("click", () => {
-      $("usersModal").classList.remove("hidden");
-      fetchUsers();
-    });
-    $("closeUsersBtn").addEventListener("click", () => $("usersModal").classList.add("hidden"));
-    $("addUserBtn").addEventListener("click", addUser);
+    /* ---------- Productos ---------- */
+    $("productsBtn").addEventListener("click", () => { $("productsModal").classList.remove("hidden"); fetchProducts(); });
+    $("closeProductsBtn").addEventListener("click", () => $("productsModal").classList.add("hidden"));
+    $("addProductBtn").addEventListener("click", addProduct);
+    $("pmSearch").addEventListener("input", () => renderProducts(window._prodCache || []));
 
-    function fetchUsers() {
-      fetch(API.replace("/orders", "/usuarios") + "?select=*&order=username", { headers: HEADERS })
+    function fetchProducts() {
+      fetch(API.replace("/orders", "/menu_items") + "?marca=eq." + encodeURIComponent(BRAND.marca || "") + "&select=*&order=categoria,orden", { headers: HEADERS })
         .then(r => r.json()).then(rows => {
-          $("usersList").innerHTML = rows.map(u =>
-            '<div class="user-row">' +
-              '<span><span class="u-name">' + esc(u.nombre) + '</span>' +
-              '<span class="u-rol">@' + esc(u.username) + ' · ' + (u.rol || 'cajero').toUpperCase() + '</span>' +
-              (u.activo ? '' : ' <span style="color:#c62828;font-weight:700">INACTIVO</span>') +
-              '</span>' +
-              '<span class="u-btns">' +
-                '<button class="btn-sm danger" data-uid="' + u.id + '" data-act="toggle" data-val="' + !u.activo + '">' + (u.activo ? 'Desactivar' : 'Activar') + '</button>' +
-              '</span>' +
-            '</div>'
-          ).join("");
-          document.querySelectorAll(".u-btns button").forEach(b => {
-            b.addEventListener("click", () => {
-              const uid = b.dataset.uid;
-              const val = b.dataset.val === "true";
-              fetch(API.replace("/orders", "/usuarios") + "?id=eq." + uid, {
-                method: "PATCH",
-                headers: Object.assign({ "Content-Type": "application/json", "Prefer": "return=minimal" }, HEADERS),
-                body: JSON.stringify({ activo: val })
-              }).then(() => {
-                toast(val ? "Usuario activado" : "Usuario desactivado");
-                fetchUsers();
-              }).catch(() => toast("Error al actualizar usuario"));
-            });
-          });
-        }).catch(() => toast("Error al cargar usuarios"));
+          window._prodCache = rows;
+          renderProducts(rows);
+        }).catch(() => toast("Error al cargar productos"));
     }
 
-    function addUser() {
-      const username = $("umUser").value.trim();
-      const nombre = $("umName").value.trim();
-      const pass = $("umPass").value;
-      const rol = $("umRol").value;
-      if (!username || !nombre || !pass || pass.length < 4) {
-        toast("Completa todos los campos (contraseña mínimo 4 caracteres)");
-        return;
-      }
-      sha256(pass).then(hash => {
-        return fetch(API.replace("/orders", "/usuarios"), {
-          method: "POST",
-          headers: Object.assign({ "Content-Type": "application/json", "Prefer": "return=minimal" }, HEADERS),
-          body: JSON.stringify({ username, password_hash: hash, nombre, rol })
+    function renderProducts(rows) {
+      const q = ($("pmSearch").value || "").toLowerCase();
+      const filtered = q ? rows.filter(r => r.nombre.toLowerCase().includes(q) || r.categoria.toLowerCase().includes(q)) : rows;
+      let lastCat = "";
+      $("productsList").innerHTML = filtered.map(p => {
+        const catLine = p.categoria !== lastCat ? '<div style="font-weight:800;margin:10px 0 4px;color:var(--primary)">' + esc(p.categoria) + '</div>' : '';
+        lastCat = p.categoria;
+        return catLine + '<div class="user-row"><span><span class="u-name">' + esc(p.nombre) + '</span> $' + p.precio + (!p.disponible ? ' <span style="color:#c62828">AGOTADO</span>' : '') + '</span>' +
+          '<span class="u-btns"><button class="btn-sm" data-pid="' + p.id + '" data-act="edit">✏️</button>' +
+          '<button class="btn-sm danger" data-pid="' + p.id + '" data-act="toggle" data-val="' + !p.disponible + '">' + (p.disponible ? 'Desactivar' : 'Activar') + '</button></span></div>';
+      }).join("");
+      document.querySelectorAll("#productsList .btn-sm").forEach(b => {
+        b.addEventListener("click", () => {
+          const pid = b.dataset.pid;
+          if (b.dataset.act === "toggle") {
+            fetch(API.replace("/orders", "/menu_items") + "?id=eq." + pid, {
+              method: "PATCH", headers: Object.assign({ "Content-Type": "application/json", "Prefer": "return=minimal" }, HEADERS),
+              body: JSON.stringify({ disponible: b.dataset.val === "true" })
+            }).then(() => fetchProducts()).catch(() => toast("Error"));
+          } else if (b.dataset.act === "edit") {
+            const p = rows.find(r => r.id === pid);
+            if (!p) return;
+            $("pmCat").value = p.categoria;
+            $("pmName").value = p.nombre;
+            $("pmPrice").value = p.precio;
+            $("pmDesc").value = p.descripcion || "";
+            $("addProductBtn").textContent = "💾 Guardar cambios";
+            $("addProductBtn").dataset.editId = pid;
+          }
         });
-      }).then(r => {
-        if (!r.ok) throw new Error("HTTP " + r.status);
-        toast("Usuario " + username + " creado");
-        $("umUser").value = ""; $("umName").value = ""; $("umPass").value = "";
-        fetchUsers();
-      }).catch(() => toast("Error al crear usuario (¿el nombre de usuario ya existe?)"));
+      });
+    }
+
+    function addProduct() {
+      const cat = $("pmCat").value.trim();
+      const name = $("pmName").value.trim();
+      const price = parseInt($("pmPrice").value, 10);
+      const desc = $("pmDesc").value.trim();
+      if (!cat || !name || isNaN(price)) { toast("Completa categoría, nombre y precio"); return; }
+      const editId = $("addProductBtn").dataset.editId;
+      const body = JSON.stringify({ categoria: cat, nombre: name, precio: price, descripcion: desc, marca: (BRAND.marca || "") });
+      const method = editId ? "PATCH" : "POST";
+      const url = editId ? (API.replace("/orders", "/menu_items") + "?id=eq." + editId) : API.replace("/orders", "/menu_items");
+      fetch(url, { method, headers: Object.assign({ "Content-Type": "application/json", "Prefer": "return=minimal" }, HEADERS), body })
+        .then(() => { toast(editId ? "Producto actualizado" : "Producto creado"); $("pmCat").value = ""; $("pmName").value = ""; $("pmPrice").value = ""; $("pmDesc").value = ""; $("addProductBtn").textContent = "➕ Agregar producto"; delete $("addProductBtn").dataset.editId; fetchProducts(); })
+        .catch(() => toast("Error al guardar"));
     }
   }
 
@@ -643,7 +643,7 @@ const SUPABASE_KEY = "sb_publishable_aIIwHt4T8cDIeZjy48hRxQ_sdY7_QIf";
     $("app").classList.remove("hidden");
     $("hdUserName").textContent = user.nombre;
     $("hdUserRol").textContent = user.rol;
-    if (user.rol === "admin") $("usersBtn").style.display = "";
+    if (user.rol === "admin") { $("usersBtn").style.display = ""; $("productsBtn").style.display = ""; }
     if ("Notification" in window && Notification.permission !== "granted") {
       Notification.requestPermission();
     }
