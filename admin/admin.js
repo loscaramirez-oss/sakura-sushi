@@ -557,15 +557,17 @@ const SUPABASE_KEY = "sb_publishable_aIIwHt4T8cDIeZjy48hRxQ_sdY7_QIf";
       renderCart();
     });
 
-    $("loginBtn").addEventListener("click", doLogin);
-    $("loginPass").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
-    $("loginUser").addEventListener("keydown", e => { if (e.key === "Enter") $("loginPass").focus(); });
+    var lb = $("loginBtn"), lp = $("loginPass"), lu = $("loginUser");
+    if (lb) lb.addEventListener("click", doLogin);
+    if (lp) lp.addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
+    if (lu) lu.addEventListener("keydown", e => { if (e.key === "Enter") $("loginPass").focus(); });
 
-    /* ---------- Productos ---------- */
-    $("productsBtn").addEventListener("click", () => { $("productsModal").classList.remove("hidden"); fetchProducts(); });
-    $("closeProductsBtn").addEventListener("click", () => $("productsModal").classList.add("hidden"));
-    $("addProductBtn").addEventListener("click", addProduct);
-    $("pmSearch").addEventListener("input", () => renderProducts(window._prodCache || []));
+  /* ---------- Productos ---------- */
+  var pbtn = $("productsBtn"), cbtn = $("closeProductsBtn"), abtn = $("addProductBtn"), sbtn = $("pmSearch");
+  if (pbtn) pbtn.addEventListener("click", () => { $("productsModal").classList.remove("hidden"); fetchProducts(); });
+  if (cbtn) cbtn.addEventListener("click", () => $("productsModal").classList.add("hidden"));
+  if (abtn) abtn.addEventListener("click", addProduct);
+  if (sbtn) sbtn.addEventListener("input", () => renderProducts(window._prodCache || []));
 
     function fetchProducts() {
       fetch(API.replace("/orders", "/menu_items") + "?marca=eq." + encodeURIComponent(BRAND.marca || "") + "&select=*&order=categoria,orden", { headers: HEADERS })
@@ -837,7 +839,8 @@ const SUPABASE_KEY = "sb_publishable_aIIwHt4T8cDIeZjy48hRxQ_sdY7_QIf";
     } catch (e) { toast("Error al cerrar turno"); }
   }
 
-  $("closeTurnoBtn").addEventListener("click", () => $("turnoModal").classList.add("hidden"));
+  var ctb = $("closeTurnoBtn");
+  if (ctb) ctb.addEventListener("click", () => $("turnoModal").classList.add("hidden"));
 
   function init() {
     if (!SUPABASE_URL || !SUPABASE_KEY) {
